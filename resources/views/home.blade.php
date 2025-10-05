@@ -2,6 +2,20 @@
 
 @section('title', 'UmuPrime Imóveis - Sua casa dos sonhos está aqui')
 
+@push('styles')
+<style>
+  /* Botão de favorito (coração) — leve, não interfere no resto */
+  .btn-heart{
+    background:#fff;border:0;width:40px;height:40px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(0,0,0,.15);cursor:pointer;
+  }
+  .btn-heart .fa-heart{font-size:18px;color:#ff3b3b;}
+  .btn-heart[aria-pressed="true"] .fa-heart{color:#d10000;}
+  .btn-heart:hover{transform:translateY(-1px);}
+</style>
+@endpush
+
 @section('content')
 <!-- Hero Section -->
 <section class="hero-section">
@@ -75,9 +89,15 @@
             @foreach($imoveisDestaque as $imovel)
             <div class="col-lg-4 col-md-6">
                 <div class="property-card">
-                    <div class="property-image" style="background-image: url('{{ $imovel->primeira_imagem ? asset('storage/' . $imovel->primeira_imagem->caminho_imagem) : 'https://via.placeholder.com/400x250?text=Sem+Imagem' }}')">
+                    <div class="property-image position-relative"
+                         style="background-image: url('{{ $imovel->primeira_imagem ? asset('storage/' . $imovel->primeira_imagem->caminho_imagem) : asset('images/no-image.jpg') }}')">
                         <div class="property-badge">{{ ucfirst($imovel->tipo_negocio) }}</div>
                         <div class="property-price">{{ $imovel->valor_formatado }}</div>
+
+                        <!-- ♥ Favoritar (canto superior direito) -->
+                        <div class="position-absolute top-0 end-0 m-2">
+                            @include('components.fav-button', ['imovel' => $imovel])
+                        </div>
                     </div>
                     <div class="property-info">
                         <h5 class="property-title">{{ $imovel->titulo }}</h5>
@@ -126,9 +146,15 @@
             @foreach($imoveis as $imovel)
             <div class="col-lg-4 col-md-6">
                 <div class="property-card">
-                    <div class="property-image" style="background-image: url('{{ $imovel->primeira_imagem ? asset('storage/' . $imovel->primeira_imagem->caminho_imagem) : 'https://via.placeholder.com/400x250?text=Sem+Imagem' }}')">
+                    <div class="property-image position-relative"
+                         style="background-image: url('{{ $imovel->primeira_imagem ? asset('storage/' . $imovel->primeira_imagem->caminho_imagem) : asset('images/no-image.jpg') }}')">
                         <div class="property-badge">{{ ucfirst($imovel->tipo_negocio) }}</div>
                         <div class="property-price">{{ $imovel->valor_formatado }}</div>
+
+                        <!-- ♥ Favoritar (canto superior direito) -->
+                        <div class="position-absolute top-0 end-0 m-2">
+                            @include('components.fav-button', ['imovel' => $imovel])
+                        </div>
                     </div>
                     <div class="property-info">
                         <h5 class="property-title">{{ $imovel->titulo }}</h5>

@@ -1,47 +1,65 @@
-@extends('layouts.app')
+@extends('layouts.auth')
+
+@section('title', 'Recuperar Senha - UmuPrime Imóveis')
+
+@push('styles')
+<style>
+  /* deixa o campo e o botão centralizados e com largura mais compacta */
+  .field-compact{ max-width:420px; margin-inline:auto; }
+</style>
+@endpush
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+  <div class="text-center mb-3">
+    <h1 class="auth-title mb-1">Esqueceu sua senha?</h1>
+    <p class="auth-sub">Digite seu e-mail para receber o link de redefinição.</p>
+  </div>
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+  @if (session('status'))
+    <div class="alert alert-success bg-success bg-opacity-10 border-0 text-success fw-medium">
+      <i class="fa-solid fa-circle-check me-2"></i>
+      {{ session('status') }}
     </div>
-</div>
+  @endif
+
+  <form method="POST" action="{{ route('password.email') }}" novalidate>
+    @csrf
+
+    <!-- Campo centralizado e sem label acima -->
+    <div class="mb-3 field-compact">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fa-solid fa-envelope"></i>
+        </span>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          class="form-control @error('email') is-invalid @enderror"
+          value="{{ old('email') }}"
+          required
+          autocomplete="email"
+          autofocus
+          placeholder="E-mail"
+        >
+      </div>
+      @error('email')
+        <div class="invalid-feedback d-block">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <div class="field-compact d-grid gap-2 mt-3">
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-paper-plane me-2"></i>
+        Enviar link de redefinição
+      </button>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{ route('login') }}" class="text-link">
+        <i class="fa-solid fa-arrow-left-long me-1"></i>
+        Voltar para o login
+      </a>
+    </div>
+  </form>
 @endsection

@@ -2,22 +2,22 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        User::create([
-            'name' => 'Administrador UmuPrime',
-            'email' => 'admin@umuprime.com.br',
-            'password' => Hash::make('admin123'),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@umuprime.com.br'],
+            [
+                'name'              => 'Administrador UmuPrime',
+                'password'          => Hash::make('admin123'), // troque depois!
+                'is_admin'          => true,                   // garante perfil admin
+                'email_verified_at' => now(),                  // caso verificação esteja desligada
+            ]
+        );
     }
 }

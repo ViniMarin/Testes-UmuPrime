@@ -13,9 +13,8 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * Campos liberados para atribuição em massa.
+     * Obs.: NÃO incluímos is_admin aqui por segurança.
      */
     protected $fillable = [
         'name',
@@ -24,9 +23,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * Campos ocultos na serialização.
      */
     protected $hidden = [
         'password',
@@ -34,12 +31,27 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Casts de atributos.
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password'          => 'hashed',
+        'is_admin'          => 'boolean', // <- novo
     ];
+
+    /**
+     * Helper semanticamente claro.
+     */
+    public function isAdmin(): bool
+    {
+        return (bool) ($this->is_admin ?? false);
+    }
+
+    /**
+     * Scopes úteis (opcional).
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->where('is_admin', true);
+    }
 }

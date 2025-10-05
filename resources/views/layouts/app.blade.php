@@ -69,7 +69,7 @@
             display:grid;
             gap:16px;
             grid-auto-flow:column;
-            grid-auto-columns:340px;           /* largura fixa, dá rolagem horizontal */
+            grid-auto-columns:340px;
             overflow-x:auto;
             padding:8px;
             scroll-snap-type:x proximity;
@@ -82,7 +82,7 @@
 
         .compare-card-full{scroll-snap-align:start}
         .compare-card-full .compare-thumb{width:100%;height:160px;object-fit:cover;border-radius:10px}
-        .compare-card-full .card{height:auto !important}  /* evita cartões gigantes */
+        .compare-card-full .card{height:auto !important}
         .compare-card-full .cmp-table{border:1px solid #eee;border-radius:10px;overflow:hidden}
         .compare-card-full .cmp-row{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-bottom:1px solid #f1f1f1}
         .compare-card-full .cmp-row:last-child{border-bottom:none}
@@ -92,7 +92,7 @@
         .compare-loc{font-size:.85rem;color:#6c757d}
         .compare-price{display:flex;align-items:center;gap:8px;margin-top:8px}
 
-        /* Hero / Busca / Cards / WhatsApp / Footer (inalterados) */
+        /* Hero / Busca / Cards / WhatsApp */
         .hero-section{
             background:
               linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)),
@@ -127,11 +127,29 @@
         }
         .whatsapp-float:hover{background:#128c7e;color:#fff;transform:scale(1.1)}
 
+        /* ===== Footer ===== */
         .footer{background:var(--secondary-color);color:#fff;padding:50px 0 20px;margin-top:80px}
         .footer h5{color:var(--primary-color);margin-bottom:20px}
-        .footer a{color:#ccc;text-decoration:none}.footer a:hover{color:var(--primary-color)}
-        .social-links a{display:inline-block;width:40px;height:40px;background:var(--primary-color);color:var(--secondary-color);text-align:center;line-height:40px;border-radius:50%;margin-right:10px;transition:.3s}
+        .footer a{color:#ccc;text-decoration:none}
+        .footer a:hover{color:var(--primary-color)}
+        /* Ícones das redes: com gap próprio e respiro inferior */
+        .social-links{
+          display:flex;
+          gap:12px;
+          margin:12px 0 18px;
+        }
+        .social-links a{
+          display:inline-block;width:40px;height:40px;
+          background:var(--primary-color);color:var(--secondary-color);
+          text-align:center;line-height:40px;border-radius:50%;
+          transition:.3s;margin-right:0;
+        }
         .social-links a:hover{background:var(--accent-color);transform:translateY(-3px)}
+        /* Espaço entre blocos do rodapé quando empilha */
+        .footer .row > [class*="col-"]{margin-bottom:24px}
+        @media (min-width:768px){
+          .footer .row > [class*="col-"]{margin-bottom:0}
+        }
 
         @media (max-width:768px){
             .hero-content h1{font-size:2.5rem}
@@ -206,7 +224,7 @@
         </div>
     </div>
 
-    <!-- Modal Comparação (GRADE POR COLUNA) -->
+    <!-- Modal Comparação -->
     <div class="modal fade" id="compareModal" tabindex="-1">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -231,13 +249,14 @@
     <footer class="footer">
         <div class="container">
             <div class="row">
+                <!-- adicionada margem nas colunas no mobile via CSS; se preferir, pode usar mb-4 mb-md-0 aqui -->
                 <div class="col-md-4">
                     <h5>UmuPrime Imóveis</h5>
                     <p>Sua imobiliária de confiança em Umuarama. Encontre o imóvel dos seus sonhos conosco.</p>
                     <div class="social-links">
-                        <a href="https://www.instagram.com/umuprimeimoveis" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://www.facebook.com/umuprime" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a href="https://wa.me/5544997292225" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://www.instagram.com/umuprimeimoveis" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.facebook.com/umuprime" target="_blank" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="https://wa.me/5544997292225" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -281,7 +300,6 @@
         function saveFavs(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); renderFavUI(); markHearts(); }
         function isFav(id){ return getFavs().some(x => String(x.id)===String(id)); }
 
-        // força o ícone correto (regular ↔ solid) e cor no botão de coração
         function setHeart(btn,on){
             btn.classList.toggle('is-fav', on);
             btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -296,7 +314,6 @@
             });
         }
 
-        // Painel de favoritos
         function renderFavUI(){
             const favs = getFavs(), n=favs.length;
             if(elFavCount) elFavCount.textContent = n;
@@ -304,8 +321,13 @@
 
             if(!elFavList) return;
             elFavList.innerHTML = '';
-            if(n===0){ elFavEmpty.style.display='block'; elBtnCompare && (elBtnCompare.disabled = true); return; }
-            elFavEmpty.style.display='none'; elBtnCompare && (elBtnCompare.disabled = n<2);
+            if(n===0){
+                if (elFavEmpty) elFavEmpty.style.display='block';
+                if (elBtnCompare) elBtnCompare.disabled = true;
+                return;
+            }
+            if (elFavEmpty) elFavEmpty.style.display='none';
+            if (elBtnCompare) elBtnCompare.disabled = n<2;
 
             favs.forEach(f=>{
                 const row=document.createElement('div');
@@ -332,10 +354,10 @@
             });
         }
 
-        // Modal de comparação: grade por coluna (card em cima + lista embaixo)
         function openCompare(){
             const favs=getFavs();
-            elCompareCount.textContent = favs.length;
+            if (elCompareCount) elCompareCount.textContent = favs.length;
+            if (!elCompareGrid) return;
             elCompareGrid.innerHTML = '';
 
             const rows = [
@@ -382,7 +404,6 @@
                 elCompareGrid.appendChild(col);
             });
 
-            // ativa arraste horizontal (mouse/touch)
             enableDragScroll(elCompareGrid);
         }
 
@@ -392,11 +413,8 @@
             return (v===null || v===undefined || v==='') ? '—' : v;
         }
 
-        // Drag-to-scroll
         function enableDragScroll(el){
             let isDown=false, startX=0, scrollLeft=0;
-
-            // evita múltiplos binds
             if(el.dataset.dragBound) return;
             el.dataset.dragBound = '1';
 
@@ -415,7 +433,6 @@
                 el.scrollLeft = scrollLeft - walk;
             });
 
-            // touch
             let tStartX=0, tScrollLeft=0;
             el.addEventListener('touchstart', (e)=>{
                 const t = e.touches[0];
@@ -428,7 +445,6 @@
             }, {passive:true});
         }
 
-        // Delegações (toggle do coração / remover no painel)
         document.addEventListener('click', function(e){
             const t = e.target.closest('.js-fav-toggle');
             if(t){
@@ -475,10 +491,10 @@
             }
         });
 
+        /* AQUI: só usamos a referência já criada no topo, sem redeclarar */
         elBtnCompare && elBtnCompare.addEventListener('click', openCompare);
         window.addEventListener('storage', ev => { if(ev.key===KEY){ renderFavUI(); markHearts(); } });
 
-        // inicial
         renderFavUI(); markHearts();
         document.addEventListener('DOMContentLoaded', markHearts);
     })();

@@ -16,12 +16,13 @@ class ImovelController extends Controller
         // Imóveis relacionados (mesmo tipo de negócio e cidade)
         $imoveisRelacionados = Imovel::with(['imagens' => function($q) {
             $q->orderBy('ordem');
-        }])->where('tipo_negocio', $imovel->tipo_negocio)
-          ->where('cidade', $imovel->cidade)
-          ->where('id', '!=', $imovel->id)
-          ->where('status', 'disponivel')
-          ->limit(4)
-          ->get();
+        }])
+        ->where('tipo_negocio', $imovel->tipo_negocio)
+        ->where('cidade', $imovel->cidade)
+        ->where('id', '!=', $imovel->id)
+        ->where('status', 'disponivel')
+        ->limit(4)
+        ->get();
 
         return view('imovel.show', compact('imovel', 'imoveisRelacionados'));
     }
@@ -36,50 +37,86 @@ class ImovelController extends Controller
         return $this->listarPorTipo('venda', $request);
     }
 
-    private function listarPorTipo($tipo, Request $request)
+    /**
+     * Lista imóveis por tipo de negócio com filtros padronizados.
+     */
+    private function listarPorTipo(string $tipo, Request $request)
     {
-        $query = Imovel::with(['imagens' => function($q) {
-            $q->orderBy('ordem');
-        }])->where('tipo_negocio', $tipo);
+        // Base: somente disponíveis do tipo desejado
+        $base = Imovel::query()
+            ->where('status', 'disponivel')
+            ->where('tipo_negocio', $tipo);
 
-        // Tipos de imóveis válidos
+        // Cidades existentes para o filtro (apenas onde há imóvel desse tipo)
+        $cidades = (clone $base)
+            ->whereNotNull('cidade')
+            ->select('cidade')
+            ->distinct()
+            ->orderBy('cidade')
+            ->pluck('cidade');
+
+        // Query principal (com imagens ordenadas)
+        $query = (clone $base)->with(['imagens' => function($q) {
+            $q->orderBy('ordem');
+        }]);
+
+        // Tipos permitidos (ajuste se quiser)
         $tiposPermitidos = [
-            'apartamento',
-            'casa',
-            'terreno',
-            'sala_comercial',
-            'salao_comercial',
-            'chacara',
-            'sobrado'
+            'apartamento','casa','terreno','sala_comercial','salao_comercial','chacara','sobrado'
         ];
 
-        // Aplicar filtros
-        if ($request->filled('tipo_imovel') && in_array($request->tipo_imovel, $tiposPermitidos)) {
+        // --- Filtros ---
+        if ($request->filled('tipo_imovel') && in_array($request->tipo_imovel, $tiposPermitidos, true)) {
+            // se no DB for valor único, ótimo; se for texto livre, pode usar like
             $query->where('tipo_imovel', $request->tipo_imovel);
         }
 
-        if ($request->filled('valor_min')) {
-            $query->where('valor', '>=', $request->valor_min);
+        // Suporta tanto "R$ 1.234,56" quanto "1234.56"
+        $toFloat = function ($v) {
+            if ($v === null || $v === '') return null;
+            if (is_numeric($v)) return (float)$v;
+            // remove tudo que não é dígito, vírgula, ponto ou sinal
+            $v = preg_replace('/[^\d,.-]/', '', $v);
+            // remove separadores de milhar e troca vírgula por ponto
+            $v = str_replace(['.', ' '], '', $v);
+            $v = str_replace(',', '.', $v);
+            return (float)$v;
+        };
+
+        $min = $toFloat($request->input('valor_min'));
+        $max = $toFloat($request->input('valor_max'));
+
+        if ($min !== null && $max !== null && $min > $max) {
+            [$min, $max] = [$max, $min];
         }
 
-        if ($request->filled('valor_max')) {
-            $query->where('valor', '<=', $request->valor_max);
-        }
+        if ($min !== null) { $query->where('valor', '>=', $min); }
+        if ($max !== null) { $query->where('valor', '<=', $max); }
 
         if ($request->filled('cidade')) {
-            $query->where('cidade', 'like', '%' . $request->cidade . '%');
+            $query->where('cidade', $request->input('cidade')); // vem de <select>
         }
 
         if ($request->filled('bairro')) {
-            $query->where('bairro', 'like', '%' . $request->bairro . '%');
+            $query->where('bairro', 'like', '%'.$request->input('bairro').'%');
         }
 
-        $query->where('status', 'disponivel');
+        if ($request->filled('referencia')) {
+            $query->where('referencia', 'like', '%'.$request->input('referencia').'%');
+        }
 
-        $imoveis = $query->orderBy('destaque', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(12);
+        // Ordenação e paginação
+        $imoveis = $query
+            ->orderBy('destaque', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12)
+            ->withQueryString(); // mantém os filtros na paginação
 
-        return view('imovel.lista', compact('imoveis', 'tipo'));
+        // Usa uma única view para ambos, passando $tipo e $cidades para os filtros
+        return view('imovel.lista', [
+            'imoveis'  => $imoveis,
+            'tipo'     => $tipo,     // 'aluguel' ou 'venda'
+            'cidades'  => $cidades,  // lista para o select
+        ]);
     }
 }

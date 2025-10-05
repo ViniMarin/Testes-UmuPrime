@@ -37,34 +37,67 @@
                     <select name="tipo_negocio" class="form-select">
                         <option value="">Selecione</option>
                         <option value="aluguel" {{ request('tipo_negocio') == 'aluguel' ? 'selected' : '' }}>Alugar</option>
-                        <option value="venda" {{ request('tipo_negocio') == 'venda' ? 'selected' : '' }}>Comprar</option>
+                        <option value="venda"   {{ request('tipo_negocio') == 'venda'   ? 'selected' : '' }}>Comprar</option>
                     </select>
                 </div>
+
                 <div class="col-md-2">
                     <label class="form-label">Tipo do Imóvel</label>
                     <select name="tipo_imovel" class="form-select">
                         <option value="">Selecione</option>
-                        <option value="apartamento" {{ request('tipo_imovel') == 'apartamento' ? 'selected' : '' }}>Apartamento</option>
-                        <option value="casa" {{ request('tipo_imovel') == 'casa' ? 'selected' : '' }}>Casa</option>
-                        <option value="sobrado" {{ request('tipo_imovel') == 'sobrado' ? 'selected' : '' }}>Sobrado</option>
-                        <option value="chacara" {{ request('tipo_imovel') == 'chacara' ? 'selected' : '' }}>Chácara</option>
-                        <option value="terreno" {{ request('tipo_imovel') == 'terreno' ? 'selected' : '' }}>Terreno</option>
-                        <option value="sala_comercial" {{ request('tipo_imovel') == 'sala_comercial' ? 'selected' : '' }}>Sala Comercial</option>
-                        <option value="salao_comercial" {{ request('tipo_imovel') == 'salao_comercial' ? 'selected' : '' }}>Salão Comercial</option>
+                        <option value="apartamento"   {{ request('tipo_imovel') == 'apartamento'   ? 'selected' : '' }}>Apartamento</option>
+                        <option value="casa"          {{ request('tipo_imovel') == 'casa'          ? 'selected' : '' }}>Casa</option>
+                        <option value="sobrado"       {{ request('tipo_imovel') == 'sobrado'       ? 'selected' : '' }}>Sobrado</option>
+                        <option value="chacara"       {{ request('tipo_imovel') == 'chacara'       ? 'selected' : '' }}>Chácara</option>
+                        <option value="terreno"       {{ request('tipo_imovel') == 'terreno'       ? 'selected' : '' }}>Terreno</option>
+                        <option value="sala_comercial"{{ request('tipo_imovel') == 'sala_comercial'? 'selected' : '' }}>Sala Comercial</option>
+                        <option value="salao_comercial"{{ request('tipo_imovel') == 'salao_comercial'? 'selected' : '' }}>Salão Comercial</option>
                     </select>
                 </div>
+
+                {{-- Valor mínimo (visível com máscara + hidden numérico) --}}
                 <div class="col-md-2">
                     <label class="form-label">Valor mínimo</label>
-                    <input type="number" name="valor_min" class="form-control" placeholder="R$ 0,00" value="{{ request('valor_min') }}">
+                    <input type="hidden" name="valor_min" id="valor_min" value="{{ request('valor_min') }}">
+                    <input
+                        type="text"
+                        id="valor_min_mask"
+                        class="form-control"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        placeholder="R$ 0,00"
+                        value="{{ request('valor_min') !== null && request('valor_min') !== '' ? 'R$ '.number_format((float)request('valor_min'), 2, ',', '.') : '' }}"
+                    >
                 </div>
+
+                {{-- Valor máximo (visível com máscara + hidden numérico) --}}
                 <div class="col-md-2">
                     <label class="form-label">Valor máximo</label>
-                    <input type="number" name="valor_max" class="form-control" placeholder="R$ 0,00" value="{{ request('valor_max') }}">
+                    <input type="hidden" name="valor_max" id="valor_max" value="{{ request('valor_max') }}">
+                    <input
+                        type="text"
+                        id="valor_max_mask"
+                        class="form-control"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        placeholder="R$ 0,00"
+                        value="{{ request('valor_max') !== null && request('valor_max') !== '' ? 'R$ '.number_format((float)request('valor_max'), 2, ',', '.') : '' }}"
+                    >
                 </div>
+
+                {{-- Cidade (select populado pelo controller com cidades existentes) --}}
                 <div class="col-md-2">
                     <label class="form-label">Cidade</label>
-                    <input type="text" name="cidade" class="form-control" placeholder="Digite a cidade" value="{{ request('cidade') }}">
+                    <select name="cidade" class="form-select">
+                        <option value="">Todas</option>
+                        @foreach(($cidades ?? []) as $cidade)
+                            <option value="{{ $cidade }}" {{ request('cidade') === $cidade ? 'selected' : '' }}>
+                                {{ $cidade }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
+
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">
@@ -94,7 +127,6 @@
                         <div class="property-badge">{{ ucfirst($imovel->tipo_negocio) }}</div>
                         <div class="property-price">{{ $imovel->valor_formatado }}</div>
 
-                        <!-- ♥ Favoritar (canto superior direito) -->
                         <div class="position-absolute top-0 end-0 m-2">
                             @include('components.fav-button', ['imovel' => $imovel])
                         </div>
@@ -106,19 +138,13 @@
                         </p>
                         <div class="property-features">
                             @if($imovel->quartos)
-                            <div class="feature-item">
-                                <i class="fas fa-bed"></i> {{ $imovel->quartos }}
-                            </div>
+                            <div class="feature-item"><i class="fas fa-bed"></i> {{ $imovel->quartos }}</div>
                             @endif
                             @if($imovel->banheiros)
-                            <div class="feature-item">
-                                <i class="fas fa-bath"></i> {{ $imovel->banheiros }}
-                            </div>
+                            <div class="feature-item"><i class="fas fa-bath"></i> {{ $imovel->banheiros }}</div>
                             @endif
                             @if($imovel->area_construida)
-                            <div class="feature-item">
-                                <i class="fas fa-ruler-combined"></i> {{ $imovel->area_construida }}m²
-                            </div>
+                            <div class="feature-item"><i class="fas fa-ruler-combined"></i> {{ $imovel->area_construida }}m²</div>
                             @endif
                         </div>
                         <a href="{{ route('imovel.show', $imovel->id) }}" class="btn btn-primary w-100">
@@ -151,7 +177,6 @@
                         <div class="property-badge">{{ ucfirst($imovel->tipo_negocio) }}</div>
                         <div class="property-price">{{ $imovel->valor_formatado }}</div>
 
-                        <!-- ♥ Favoritar (canto superior direito) -->
                         <div class="position-absolute top-0 end-0 m-2">
                             @include('components.fav-button', ['imovel' => $imovel])
                         </div>
@@ -163,19 +188,13 @@
                         </p>
                         <div class="property-features">
                             @if($imovel->quartos)
-                            <div class="feature-item">
-                                <i class="fas fa-bed"></i> {{ $imovel->quartos }}
-                            </div>
+                            <div class="feature-item"><i class="fas fa-bed"></i> {{ $imovel->quartos }}</div>
                             @endif
                             @if($imovel->banheiros)
-                            <div class="feature-item">
-                                <i class="fas fa-bath"></i> {{ $imovel->banheiros }}
-                            </div>
+                            <div class="feature-item"><i class="fas fa-bath"></i> {{ $imovel->banheiros }}</div>
                             @endif
                             @if($imovel->area_construida)
-                            <div class="feature-item">
-                                <i class="fas fa-ruler-combined"></i> {{ $imovel->area_construida }}m²
-                            </div>
+                            <div class="feature-item"><i class="fas fa-ruler-combined"></i> {{ $imovel->area_construida }}m²</div>
                             @endif
                         </div>
                         <a href="{{ route('imovel.show', $imovel->id) }}" class="btn btn-primary w-100">
@@ -187,7 +206,6 @@
             @endforeach
         </div>
         
-        <!-- Pagination -->
         <div class="d-flex justify-content-center mt-5">
             {{ $imoveis->links() }}
         </div>
@@ -219,3 +237,47 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+(() => {
+  // Helpers para BRL
+  function maskFromNumber(num) {
+    if (num === '' || num === null || num === undefined) return '';
+    const n = Number(num);
+    if (Number.isNaN(n)) return '';
+    return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function toNumberFromMask(str) {
+    if (!str) return '';
+    const digits = String(str).replace(/[^\d]/g, '');
+    if (!digits) return '';
+    return (parseInt(digits, 10) / 100).toFixed(2); // string "1234.56"
+  }
+  function bindCurrency(maskId, hiddenId) {
+    const $mask = document.getElementById(maskId);
+    const $hidden = document.getElementById(hiddenId);
+    if (!$mask || !$hidden) return;
+
+    // Inicializa a máscara a partir do hidden (vindo da request)
+    if ($hidden.value) $mask.value = maskFromNumber($hidden.value);
+
+    $mask.addEventListener('input', () => {
+      const numeric = toNumberFromMask($mask.value);
+      $hidden.value = numeric || '';
+      $mask.value = numeric ? maskFromNumber(numeric) : '';
+      // coloca o cursor no fim para evitar "pulos"
+      const len = $mask.value.length;
+      $mask.setSelectionRange(len, len);
+    });
+
+    $mask.addEventListener('blur', () => {
+      if (!$mask.value) $hidden.value = '';
+    });
+  }
+
+  bindCurrency('valor_min_mask', 'valor_min');
+  bindCurrency('valor_max_mask', 'valor_max');
+})();
+</script>
+@endpush

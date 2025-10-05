@@ -9,48 +9,72 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Imovel::with(['imagens' => function($q) {
+        // Base para consultas (apenas imóveis disponíveis)
+        $base = Imovel::query()->where('status', 'disponivel');
+
+        // Lista de cidades existentes (distintas) para o filtro
+        $cidades = (clone $base)
+            ->whereNotNull('cidade')
+            ->select('cidade')
+            ->distinct()
+            ->orderBy('cidade')
+            ->pluck('cidade');
+
+        // Query principal com imagens ordenadas
+        $query = (clone $base)->with(['imagens' => function ($q) {
             $q->orderBy('ordem');
         }]);
 
-        // Filtros de busca
+        // ----- Filtros -----
         if ($request->filled('tipo_negocio')) {
-            $query->where('tipo_negocio', $request->tipo_negocio);
+            $query->where('tipo_negocio', $request->input('tipo_negocio'));
         }
 
         if ($request->filled('tipo_imovel')) {
-            $query->where('tipo_imovel', 'like', '%' . $request->tipo_imovel . '%');
+            // se no DB for valor único, pode trocar por where('tipo_imovel', $request->input('tipo_imovel'))
+            $query->where('tipo_imovel', 'like', '%' . $request->input('tipo_imovel') . '%');
         }
 
-        if ($request->filled('valor_min')) {
-            $query->where('valor', '>=', $request->valor_min);
+        // valores já chegam em "1234.56" via hidden no formulário
+        $min = $request->input('valor_min');
+        $max = $request->input('valor_max');
+
+        // normaliza se vierem invertidos
+        if ($min !== null && $min !== '' && $max !== null && $max !== '' && (float)$min > (float)$max) {
+            [$min, $max] = [$max, $min];
         }
 
-        if ($request->filled('valor_max')) {
-            $query->where('valor', '<=', $request->valor_max);
+        if ($min !== null && $min !== '') {
+            $query->where('valor', '>=', (float)$min);
+        }
+        if ($max !== null && $max !== '') {
+            $query->where('valor', '<=', (float)$max);
         }
 
         if ($request->filled('cidade')) {
-            $query->where('cidade', 'like', '%' . $request->cidade . '%');
+            $query->where('cidade', $request->input('cidade')); // igualdade pois vem de um select
         }
 
         if ($request->filled('referencia')) {
-            $query->where('referencia', 'like', '%' . $request->referencia . '%');
+            $query->where('referencia', 'like', '%' . $request->input('referencia') . '%');
         }
 
-        $query->where('status', 'disponivel');
+        // Ordenação e paginação
+        $imoveis = $query
+            ->orderBy('destaque', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12)
+            ->withQueryString(); // mantém filtros na paginação
 
-        $imoveis = $query->orderBy('destaque', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(12);
+        // Destaques
+        $imoveisDestaque = (clone $base)
+            ->with(['imagens' => function ($q) {
+                $q->orderBy('ordem');
+            }])
+            ->where('destaque', true)
+            ->limit(6)
+            ->get();
 
-        $imoveisDestaque = Imovel::with(['imagens' => function($q) {
-            $q->orderBy('ordem');
-        }])->where('destaque', true)
-          ->where('status', 'disponivel')
-          ->limit(6)
-          ->get();
-
-        return view('home', compact('imoveis', 'imoveisDestaque'));
+        return view('home', compact('imoveis', 'imoveisDestaque', 'cidades'));
     }
 }
